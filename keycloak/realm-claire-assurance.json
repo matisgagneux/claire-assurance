@@ -1,0 +1,95 @@
+{
+  "realm": "claire-assurance",
+  "enabled": true,
+  "displayName": "Claire Assurance",
+  "loginTheme": "keycloak",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "admin", "description": "Administrateur — accès complet" },
+      { "name": "gestionnaire", "description": "Gestionnaire — gère contrats et sinistres" },
+      { "name": "agent", "description": "Agent — lecture seule" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "claire-backoffice",
+      "name": "Claire Backoffice",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "claire-backoffice-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin.claire",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Admin",
+      "email": "admin@claire-assurance.fr",
+      "credentials": [
+        { "type": "password", "value": "admin", "temporary": false }
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "gestionnaire.claire",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Gaël",
+      "lastName": "Gestion",
+      "email": "gestionnaire@claire-assurance.fr",
+      "credentials": [
+        { "type": "password", "value": "gestion", "temporary": false }
+      ],
+      "realmRoles": ["gestionnaire"]
+    },
+    {
+      "username": "agent.claire",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Agnès",
+      "lastName": "Agent",
+      "email": "agent@claire-assurance.fr",
+      "credentials": [
+        { "type": "password", "value": "agent", "temporary": false }
+      ],
+      "realmRoles": ["agent"]
+    }
+  ]
+}

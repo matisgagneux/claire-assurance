@@ -1,0 +1,64 @@
+services:
+  # ---------- Base de données applicative ----------
+  postgres:
+    image: postgres:16-alpine
+    container_name: claire-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: claire
+      POSTGRES_PASSWORD: claire
+      POSTGRES_DB: claire_assurance
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claire -d claire_assurance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------- Base de données Keycloak ----------
+  keycloak-db:
+    image: postgres:16-alpine
+    container_name: claire-keycloak-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+      POSTGRES_DB: keycloak
+    volumes:
+      - keycloak_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------- Keycloak (auth) ----------
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: claire-keycloak
+    restart: unless-stopped
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak/realm-claire-assurance.json:/opt/keycloak/data/import/realm-claire-assurance.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  keycloak_data:

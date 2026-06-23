@@ -1,0 +1,128 @@
+// Schéma Prisma — Claire Assurance (backoffice)
+// Entités : Client, Contrat, Sinistre, Paiement
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TypeContrat {
+  AUTO
+  HABITATION
+  SANTE
+  VIE
+  RESPONSABILITE_CIVILE
+}
+
+enum StatutContrat {
+  ACTIF
+  EN_ATTENTE
+  SUSPENDU
+  RESILIE
+}
+
+enum StatutSinistre {
+  OUVERT
+  EN_COURS
+  EN_EXPERTISE
+  CLOS
+  REFUSE
+}
+
+enum StatutPaiement {
+  PAYE
+  EN_ATTENTE
+  EN_RETARD
+  ANNULE
+}
+
+enum MoyenPaiement {
+  PRELEVEMENT
+  CARTE
+  VIREMENT
+  CHEQUE
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  reference   String   @unique // ex: CLI-2024-0001
+  civilite    String? // M., Mme
+  prenom      String
+  nom         String
+  email       String   @unique
+  telephone   String?
+  adresse     String?
+  codePostal  String?
+  ville       String?
+  dateNaissance DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contrats Contrat[]
+
+  @@index([nom])
+}
+
+model Contrat {
+  id             String        @id @default(cuid())
+  reference      String        @unique // ex: CTR-2024-0001
+  type           TypeContrat
+  statut         StatutContrat @default(ACTIF)
+  libelle        String // intitulé lisible
+  primeAnnuelle  Decimal       @db.Decimal(10, 2)
+  franchise      Decimal       @db.Decimal(10, 2) @default(0)
+  dateDebut      DateTime
+  dateFin        DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  sinistres Sinistre[]
+  paiements Paiement[]
+
+  @@index([clientId])
+  @@index([statut])
+}
+
+model Sinistre {
+  id              String         @id @default(cuid())
+  reference       String         @unique // ex: SIN-2024-0001
+  statut          StatutSinistre @default(OUVERT)
+  description     String
+  dateDeclaration DateTime       @default(now())
+  dateIncident    DateTime
+  montantEstime   Decimal?       @db.Decimal(10, 2)
+  montantIndemnise Decimal?      @db.Decimal(10, 2)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  contratId String
+  contrat   Contrat @relation(fields: [contratId], references: [id], onDelete: Cascade)
+
+  @@index([contratId])
+  @@index([statut])
+}
+
+model Paiement {
+  id           String         @id @default(cuid())
+  reference    String         @unique // ex: PAY-2024-0001
+  montant      Decimal        @db.Decimal(10, 2)
+  statut       StatutPaiement @default(EN_ATTENTE)
+  moyen        MoyenPaiement  @default(PRELEVEMENT)
+  dateEcheance DateTime
+  datePaiement DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  contratId String
+  contrat   Contrat @relation(fields: [contratId], references: [id], onDelete: Cascade)
+
+  @@index([contratId])
+  @@index([statut])
+}
