@@ -1,5 +1,4 @@
 services:
-  # ---------- Base de données applicative ----------
   postgres:
     image: postgres:16-alpine
     container_name: claire-postgres
@@ -18,7 +17,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # ---------- Base de données Keycloak ----------
   keycloak-db:
     image: postgres:16-alpine
     container_name: claire-keycloak-db
@@ -35,7 +33,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # ---------- Keycloak (auth) ----------
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: claire-keycloak
@@ -58,6 +55,25 @@ services:
     depends_on:
       keycloak-db:
         condition: service_healthy
+
+  app:
+    build: .
+    container_name: claire-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://claire:claire@postgres:5432/claire_assurance?schema=public"
+      NEXTAUTH_URL: "http://10.92.0.19:3000"
+      NEXTAUTH_SECRET: "dev-secret-change-me-please-0123456789abcdef"
+      KEYCLOAK_ISSUER: "http://10.92.0.19:8080/realms/claire-assurance"
+      KEYCLOAK_CLIENT_ID: "claire-backoffice"
+      KEYCLOAK_CLIENT_SECRET: "claire-backoffice-secret"
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
 
 volumes:
   postgres_data:
