@@ -2,6 +2,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+RUN apk add --no-cache openssl
 
 COPY package*.json ./
 RUN npm ci
@@ -13,6 +14,8 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN apk add --no-cache openssl
 
 COPY --from=builder /app ./
 
